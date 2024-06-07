@@ -1,0 +1,88 @@
+{
+  "strategy_name": "MA",
+  "params": {
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": 0.01,
+      "trailing_stop_positive_offset": 0.03,
+      "trailing_only_offset_is_reached": true
+    },
+    "max_open_trades": {
+      "max_open_trades": 6
+    },
+    "buy": {
+      "buy_diff_mfi_1": 5,
+      "buy_diff_mfi_2": 6,
+      "buy_diff_mfi_3": 9,
+      "buy_diff_mfi_4": 1,
+      "buy_diff_rsi1": 2,
+      "buy_diff_rsi2": 7,
+      "buy_diff_rsi3": 7,
+      "buy_diff_rsi4": 5,
+      "buy_length_dema1": 4,
+      "buy_length_dema2": 17,
+      "buy_length_dema3": 48,
+      "buy_length_dema4": 28,
+      "buy_length_hma1": 3,
+      "buy_length_hma2": 44,
+      "buy_length_hma3": 36,
+      "buy_length_hma4": 29,
+      "buy_length_tema1": 12,
+      "buy_length_tema2": 40,
+      "buy_length_tema3": 40,
+      "buy_length_tema4": 11,
+      "buy_mfi_1": 3,
+      "buy_mfi_2": 19,
+      "buy_mfi_3": 6,
+      "buy_mfi_4": 11,
+      "buy_offset_dema1": 18,
+      "buy_offset_dema2": 16,
+      "buy_offset_dema3": 22,
+      "buy_offset_dema4": 20,
+      "buy_offset_hma1": 19,
+      "buy_offset_hma2": 18,
+      "buy_offset_hma3": 24,
+      "buy_offset_hma4": 23,
+      "buy_offset_tema1": 17,
+      "buy_offset_tema2": 16,
+      "buy_offset_tema3": 22,
+      "buy_offset_tema4": 23,
+      "buy_rolling_mfi_1": 20,
+      "buy_rolling_mfi_2": 3,
+      "buy_rolling_mfi_3": 13,
+      "buy_rolling_mfi_4": 28,
+      "buy_rolling_rsi1": 9,
+      "buy_rolling_rsi2": 13,
+      "buy_rolling_rsi3": 25,
+      "buy_rolling_rsi4": 19,
+      "buy_rsi1": 8,
+      "buy_rsi2": 11,
+      "buy_rsi3": 7,
+      "buy_rsi4": 11
+    },
+    "sell": {
+      "sell_clear_old_trade": 20,
+      "sell_clear_old_trade_profit": 0,
+      "sell_length_ema1": 50,
+      "sell_length_ema2": 7,
+      "sell_length_ema3": 41,
+      "sell_length_ema4": 18,
+      "sell_offset_ema1": 20,
+      "sell_offset_ema2": 17,
+      "sell_offset_ema3": 16,
+      "sell_offset_ema4": 20
+    },
+    "protection": {},
+    "roi": {
+      "0": 0.152,
+      "28": 0.042,
+      "53": 0.014,
+      "77": 0
+    },
+    "stoploss": {
+      "stoploss": -0.095
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2024-06-06 17:30:27.557404+00:00"
+}
