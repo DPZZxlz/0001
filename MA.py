@@ -17,6 +17,8 @@ import pandas_ta as pta
 import logging
 from logging import FATAL
 
+
+
 logger = logging.getLogger(__name__)
 
 def tv_wma(df, length = 9) -> DataFrame:
@@ -63,8 +65,11 @@ def tv_hma(dataframe, length = 9, field = 'close') -> DataFrame:
 
 class MA(IStrategy):
 
+
+
+
 	def version(self) -> str:
-		return "Kasuari-v1-btc"
+		return "MA"
 
 	INTERFACE_VERSION = 3
 
@@ -189,7 +194,7 @@ class MA(IStrategy):
 	stoploss = -0.03
 
 	# Trailing stop:
-	trailing_stop = False
+	trailing_stop = True
 	trailing_stop_positive = 0.01
 	trailing_stop_positive_offset = 0.03
 	trailing_only_offset_is_reached = True
@@ -216,8 +221,9 @@ class MA(IStrategy):
 		dataframe['mfi'] = ta.MFI(dataframe, timeperiod=15)
 		dataframe['mfi_45'] = ta.MFI(dataframe, timeperiod=45)
 
-		stoch_fast = ta.STOCHF(dataframe, 5, 3, 0, 3, 0)
+		stoch_fast = ta.STOCHF(dataframe, 5, 3, 3, 3, 3)
 		dataframe['fastk'] = stoch_fast['fastk']
+		dataframe['fastd'] = stoch_fast['fastd']
 
 		dataframe['live_data_ok'] = (dataframe['volume'].rolling(window=72, min_periods=72).min() > 0)
 
@@ -344,7 +350,11 @@ class MA(IStrategy):
 		buy_offset_hma1 = (
 			(dataframe['close'] < dataframe['hma_offset_buy1'])
 			&
-			(dataframe['rsi'] < 30)   #rsi_1
+			(dataframe['rsi'] < 35)   #rsi_1
+			&
+			(dataframe['rsi_45'] < 50)
+			&
+			(dataframe['fastk'] > dataframe['fastd'])
 		)
 		dataframe.loc[buy_offset_hma1, 'enter_tag'] += 'l_h_1 '
 		if no_hma_1:
@@ -355,12 +365,15 @@ class MA(IStrategy):
 		no_hma_2 = []
 
 		buy_offset_hma2 = (
-			#根据收盘价与rsi入场
-			(dataframe['close'] < dataframe['hma_offset_buy2'])
+			(dataframe['close'] < dataframe['hma_offset_buy2'])#rsi_12   #rsi_24
 			&
-			(dataframe['rsi_45'] < 50) #rsi_12
+			(dataframe['rsi'] < dataframe['rsi_45']) 
 			&
-			(dataframe['rsi'] < 30)	#rsi_24
+			(dataframe['rsi_45'] < 50)
+			&
+			(dataframe['fastd'] < 50)
+			&
+			qtpylib.crossed_above(dataframe['fastk'],dataframe['fastd'])
 		)
 		dataframe.loc[buy_offset_hma2, 'enter_tag'] += 'l_h_2 '
 		if no_hma_2:
@@ -374,9 +387,9 @@ class MA(IStrategy):
 		buy_offset_hma3 = (
 			(dataframe['close'] > dataframe['hma_offset_buy3'])
 			&
-			(dataframe['rsi'] > 60)	#rsi_13
+			(dataframe['rsi'] > 65)	#rsi_13
 			&
-			(dataframe['rsi_45'] < 60)	#rsi_34
+			(dataframe['fastk'] < dataframe['fastd'])	#rsi_34
 		)
 		dataframe.loc[buy_offset_hma3, 'enter_tag'] += 's_h_3 '
 		if no_hma_3:
@@ -389,7 +402,12 @@ class MA(IStrategy):
 		buy_offset_hma4 = (
 			(dataframe['close'] > dataframe['hma_offset_buy4'])
 			&
-			(dataframe['rsi'] > 65)	 #rsi_4
+			(dataframe['rsi'] > 50)	 #rsi_4
+			&
+			qtpylib.crossed_below(dataframe['fastk'],dataframe['fastd'])
+			&
+			(dataframe['fastd'] > 50)
+
 		)
 		dataframe.loc[buy_offset_hma4, 'enter_tag'] += 's_h_4 '
 		if no_hma_4:
@@ -404,7 +422,11 @@ class MA(IStrategy):
 		buy_offset_dema1 = (
 			((dataframe['close'] < dataframe['dema_offset_buy1']).rolling(2).min() > 0)
 			&
-			(dataframe['rsi'] < 30)	 #rsi_1
+			(dataframe['rsi'] < 35)   #rsi_1
+			&
+			(dataframe['rsi_45'] < 50)
+			&
+			(dataframe['fastk'] > dataframe['fastd'])
 		)
 		dataframe.loc[buy_offset_dema1, 'enter_tag'] += 'l_d_1 '
 		if no_dema_1:
@@ -417,10 +439,15 @@ class MA(IStrategy):
 		buy_offset_dema2 = (
 			((dataframe['close'] < dataframe['dema_offset_buy2']).rolling(3).min() > 0)
 			&
-			(dataframe['rsi_45'] < 50) #rsi_12
+			(dataframe['rsi'] < dataframe['rsi_45']) 
 			&
-			(dataframe['rsi'] < 30)	#rsi_24
+			qtpylib.crossed_above(dataframe['fastk'],dataframe['fastd'])
+			&
+			(dataframe['fastd'] < 50)
+			&
+			(dataframe['rsi_45'] < 50)
 		)
+
 		dataframe.loc[buy_offset_dema2, 'enter_tag'] += 'l_dema3_12 '
 		if no_dema_2:
 			conditions.append(buy_offset_dema2 & (reduce(lambda x, y: x | y, no_dema_2) == False))
@@ -432,9 +459,10 @@ class MA(IStrategy):
 		buy_offset_dema3 = (
 			(dataframe['close'] > dataframe['dema_offset_buy3'])
 			&
-			(dataframe['rsi'] > 60)	#rsi_13
+			(dataframe['rsi'] > 65)	#rsi_13
 			&
-			(dataframe['rsi_45'] < 60)	#rsi_34
+			(dataframe['fastk'] < dataframe['fastd'])	#rsi_34
+
 		)
 		dataframe.loc[buy_offset_dema3, 'enter_tag'] += 's_d_3 '
 		if no_dema_3:
@@ -447,7 +475,11 @@ class MA(IStrategy):
 		buy_offset_dema4 = (
 			((dataframe['close'] > dataframe['dema_offset_buy4']).rolling(3).min() > 0)
 			&
-			(dataframe['rsi'] > 65)	 #rsi_4
+			(dataframe['rsi'] > 50)	 #rsi_4
+			&
+			qtpylib.crossed_below(dataframe['fastk'],dataframe['fastd'])
+			&
+			(dataframe['fastd'] > 50)
 		)
 		dataframe.loc[buy_offset_dema4, 'enter_tag'] += 's_dema3_34 '
 		if no_dema_4:
@@ -460,7 +492,11 @@ class MA(IStrategy):
 		buy_offset_tema1 = (
 			(dataframe['close'] < dataframe['tema_offset_buy1'])
 			&
-			(dataframe['rsi'] < 30) #rsi_1
+			(dataframe['rsi'] < 35)   #rsi_1
+			&
+			(dataframe['rsi_45'] < 50)
+			&
+			(dataframe['fastk'] > dataframe['fastd'])
 		)
 		dataframe.loc[buy_offset_tema1, 'enter_tag'] += 'l_t_1 '
 		if no_tema_1:
@@ -473,9 +509,13 @@ class MA(IStrategy):
 		buy_offset_tema2 = (
 			((dataframe['close'] < dataframe['tema_offset_buy2']).rolling(2).min() > 0)
 			&
-			(dataframe['rsi_45'] < 50) #rsi_12
+			(dataframe['rsi'] < dataframe['rsi_45']) 
 			&
-			(dataframe['rsi'] < 40)	#rsi_24
+			qtpylib.crossed_above(dataframe['fastk'],dataframe['fastd'])
+			&
+			(dataframe['fastd'] < 50)
+			&
+			(dataframe['rsi_45'] < 50)
 		)
 		dataframe.loc[buy_offset_tema2, 'enter_tag'] += 'l_t_2 '
 		if no_tema_2:
@@ -488,9 +528,9 @@ class MA(IStrategy):
 		buy_offset_tema3 = (
 			(dataframe['close'] > dataframe['tema_offset_buy3'])
 			&
-			(dataframe['rsi'] > 60)	#rsi_13
+			(dataframe['rsi'] > 65)	#rsi_13
 			&
-			(dataframe['rsi_45'] < 60)	#rsi_34
+			(dataframe['fastk'] < dataframe['fastd'])	#rsi_34
 		)
 		dataframe.loc[buy_offset_tema3, 'enter_tag'] += 's_t_3 '
 		if no_tema_3:
@@ -503,7 +543,11 @@ class MA(IStrategy):
 		buy_offset_tema4 = (
 			(dataframe['close'] > dataframe['tema_offset_buy4'])
 			&
-			(dataframe['rsi'] > 65)	 #rsi_4
+			(dataframe['rsi'] > 50)	 #rsi_4
+			&
+			qtpylib.crossed_below(dataframe['fastk'],dataframe['fastd'])
+			&
+			(dataframe['fastd'] > 50)
 		)
 		dataframe.loc[buy_offset_tema4, 'enter_tag'] += 's_t_4 '
 		if no_tema_4:
